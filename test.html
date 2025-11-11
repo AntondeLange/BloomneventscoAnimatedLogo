@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <title>SVG Load Test</title>
+</head>
+<body>
+  <h1>SVG Load Test</h1>
+  <svg id="test" viewBox="0 0 500 500" width="500" height="500" style="border: 1px solid red;">
+    <g id="externalArtwork"></g>
+  </svg>
+  <script>
+    async function test() {
+      const res = await fetch('assets/lilly.svg');
+      const text = await res.text();
+      console.log('Fetched lilly.svg, length:', text.length);
+      
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, 'image/svg+xml');
+      const svgElement = doc.querySelector('svg');
+      
+      console.log('Parsed SVG element:', svgElement);
+      
+      if (svgElement) {
+        const externalLayer = document.getElementById('externalArtwork');
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('transform', 'translate(100, 100) scale(0.5)');
+        
+        Array.from(svgElement.children).forEach(child => {
+          const imported = document.importNode(child, true);
+          g.appendChild(imported);
+        });
+        
+        externalLayer.appendChild(g);
+        console.log('Added to DOM');
+      }
+    }
+    test().catch(console.error);
+  </script>
+</body>
+</html>
+
