@@ -6,9 +6,46 @@
   - Routes are wired via data-route attributes; change to your real paths.
 */
 
+// Configuration Constants
+const CONFIG = {
+  ANIMATION: {
+    GUST_DURATION: 1.6,
+    GUST_COOLDOWN_MS: 1000,
+    BUTTERFLY_FLIGHT_DURATION: 12.0,
+    BUTTERFLY_WAVE_AMPLITUDE: 50,
+    BUTTERFLY_WAVE_FREQUENCY: 5,
+    SEED_DRIFT_DURATION: 3.0,
+    SEED_AUTO_HIDE_DELAY: 3000,
+    LABEL_FADE_DURATION: 0.6,
+    HOVER_DEBOUNCE_MS: 100
+  },
+  POSITIONS: {
+    DANDELION_HIT_PADDING: 5,
+    BUTTERFLY_LABEL_OFFSET_Y: 50,
+    SEED_LABEL_OFFSET_X: 40,
+    SEED_LABEL_OFFSET_X_CAPABILITIES: 85
+  }
+};
+
 // Utilities
 const $ = (sel) => /** @type {SVGElement} */(document.querySelector(sel));
 const $$ = (sel) => /** @type {NodeListOf<SVGElement>} */(document.querySelectorAll(sel));
+
+// Helper functions for element visibility
+const setElementVisible = (element) => {
+  if (!element) return;
+  element.setAttribute('opacity', '1');
+  element.style.opacity = '1';
+  element.style.visibility = 'visible';
+  element.style.display = 'block';
+};
+
+const setElementHidden = (element) => {
+  if (!element) return;
+  element.setAttribute('opacity', '0');
+  element.style.opacity = '0';
+  element.style.visibility = 'hidden';
+};
 
 // Stage entrance and parallax tilt
 const stage = document.getElementById('logoStage');
@@ -30,22 +67,19 @@ if (logoRaster) {
 async function loadSVGComponents() {
   try {
     // Load all individual SVG components
-    console.log('Loading SVG components...');
     const [lillySvg, daisySvg, dandelionWithSeedsSvg, dandelionNoSeedsSvg, seeds1Svg, seeds2Svg, seeds3Svg, seeds4Svg, butterflyClosedSvg, textSvg] = await Promise.all([
-      fetch('assets/lilly.svg').then(r => { console.log('lilly:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/daisey.svg').then(r => { console.log('daisy:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/dandilionwseeds.svg').then(r => { console.log('dandelion w seeds:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/dandilionwoseeds.svg').then(r => { console.log('dandelion no seeds:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/dandilionseeds1.svg').then(r => { console.log('seed1:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/dandilionseeds2.svg').then(r => { console.log('seed2:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/dandilionseeds3.svg').then(r => { console.log('seed3:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/dandilionseeds4.svg').then(r => { console.log('seed4:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/butterflywingsclosed.svg').then(r => { console.log('butterfly closed:', r.ok); return r.ok ? r.text() : ''; }),
-      fetch('assets/logotext.svg').then(r => { console.log('text:', r.ok); return r.ok ? r.text() : ''; })
+      fetch('assets/lilly.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/daisey.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/dandilionwseeds.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/dandilionwoseeds.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/dandilionseeds1.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/dandilionseeds2.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/dandilionseeds3.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/dandilionseeds4.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/butterflywingsclosed.svg').then(r => { return r.ok ? r.text() : ''; }),
+      fetch('assets/logotext.svg').then(r => { return r.ok ? r.text() : ''; })
     ]);
     
-    console.log('SVG loading complete');
-    console.log('lillySvg length:', lillySvg.length);
 
     // Create groups for each component with positioning
     // These positions match the original scaffold layout from index.html
@@ -68,11 +102,9 @@ async function loadSVGComponents() {
 
     components.forEach(comp => {
       if (!comp.svg) {
-        console.log(`Missing SVG for ${comp.name}`);
         return;
       }
       
-      console.log(`Processing ${comp.name}, SVG length: ${comp.svg.length}`);
       
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('id', comp.name);
@@ -99,7 +131,6 @@ async function loadSVGComponents() {
           const [x, y, width, height] = viewBox.split(' ').map(Number);
           
           // NO HIT AREA - just use the visual content directly
-          console.log(`Hit area for ${comp.name}: x=${x}, y=${y}, w=${width}, h=${height}`);
         }
         
       } else {
@@ -167,7 +198,6 @@ async function loadSVGComponents() {
       }
       
       externalLayer.appendChild(g);
-      console.log(`Added ${comp.name} to DOM at (${comp.x}, ${comp.y})`);
       
     });
 
@@ -182,30 +212,19 @@ async function loadSVGComponents() {
     if (lilyEl && lilyEl.parentNode === externalLayer) {
       externalLayer.removeChild(lilyEl);
       externalLayer.appendChild(lilyEl);
-      console.log('Moved lily to end (on top)');
     }
     if (daisyEl && daisyEl.parentNode === externalLayer) {
       externalLayer.removeChild(daisyEl);
       externalLayer.appendChild(daisyEl);
-      console.log('Moved daisy to end (on top)');
     }
     // Dandelion stays in its natural position (before lily/daisy)
     // But it can still be triggered when not overlapping
 
-    console.log('Setting has-external class');
     stage.classList.add('has-external');
-    console.log('Creating interactive overlays');
     
     // Debug: Check if elements exist
-    console.log('Checking for elements:');
-    console.log('lilly:', $('#lilly'));
-    console.log('daisy:', $('#daisy'));
-    console.log('dandelion:', $('#dandelion'));
-    console.log('butterflyClosed:', $('#butterflyClosed'));
-    console.log('brand:', $('#brand'));
     
     createInteractiveOverlays();
-    console.log('Setup complete');
   } catch (err) {
     console.error('Error loading SVG components:', err);
     // Fallback: try to load PNG if SVG fails
@@ -217,7 +236,6 @@ async function loadSVGComponents() {
 }
 
 // Start loading components
-console.log('Starting to load SVG components...');
 loadSVGComponents().catch(err => {
   console.error('Failed to load components:', err);
   // Show the scaffold as fallback
@@ -255,7 +273,6 @@ function createInteractiveOverlays() {
   
   // Add interactions to existing elements
   if (lily) {
-    console.log('Attaching interactions to lily');
     lily.classList.add('hotspot');
     lily.setAttribute('data-route', '/about');
     lily.setAttribute('tabindex', '0');
@@ -303,16 +320,13 @@ function createInteractiveOverlays() {
     
     lily.addEventListener('click', (e) => {
       e.stopPropagation();
-      console.log('Lily clicked');
       navigate('/about');
     });
     lily.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate('/about'); });
   } else {
-    console.log('Lily not found!');
   }
   
   if (daisy) {
-    console.log('Attaching interactions to daisy');
     daisy.classList.add('hotspot');
     daisy.setAttribute('data-route', '/team');
     daisy.setAttribute('tabindex', '0');
@@ -363,23 +377,19 @@ function createInteractiveOverlays() {
     
     daisy.addEventListener('click', (e) => {
       e.stopPropagation();
-      console.log('Daisy clicked');
       navigate('/team');
     });
     daisy.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate('/team'); });
   } else {
-    console.log('Daisy not found!');
   }
   
   if (dandelion) {
-    console.log('Attaching interactions to dandelion');
     
     // CRITICAL: Ensure dandelion is at the end of externalLayer so it's on top
     const externalLayer = document.getElementById('externalArtwork');
     if (dandelion.parentNode && dandelion.parentNode === externalLayer) {
       dandelion.parentNode.removeChild(dandelion);
       externalLayer.appendChild(dandelion);
-      console.log('Moved dandelion to end of DOM (on top)');
     }
     
     dandelion.classList.add('hotspot');
@@ -443,13 +453,11 @@ function createInteractiveOverlays() {
     function scheduleSeedsAutoHide(delayMs = 3000) {
       cancelSeedsAutoHide();
       seedsAutoHideTimer = setTimeout(() => {
-        console.log('Auto-hide timer triggered');
         resetDandelionState();
       }, delayMs);
     }
     
     // Add debug logging to verify wiggle attachment
-    console.log('Attaching wiggle to dandelion, pointer-events:', dandelion.getAttribute('pointer-events'));
     attachWiggle(dandelion, { angle: 4 });
     
     // Expose seedsAreSpreading flag to wiggle function (must be after variable declaration)
@@ -469,7 +477,6 @@ function createInteractiveOverlays() {
         seed3: $('#seed3'),
         seed4: $('#seed4')
       };
-      console.log('getSeedElements result:', {
         dandelionNoSeeds: !!elements.dandelionNoSeeds,
         seed1: !!elements.seed1,
         seed2: !!elements.seed2,
@@ -510,7 +517,6 @@ function createInteractiveOverlays() {
     
     // Debug: log seed elements
     const initialSeeds = getSeedElements();
-    console.log('Dandelion seed elements found (initial):', {
       dandelionNoSeeds: !!initialSeeds.dandelionNoSeeds,
       seed1: !!initialSeeds.seed1,
       seed2: !!initialSeeds.seed2,
@@ -523,7 +529,6 @@ function createInteractiveOverlays() {
     
     // Helper: fully reset dandelion/seeds/labels state
     function resetDandelionState() {
-      console.log('resetDandelionState called');
       // CRITICAL: Reset ALL state flags to allow re-triggering
       seedsAreSpreading = false;
       seedsVisible = false; // Reset visibility flag
@@ -588,7 +593,6 @@ function createInteractiveOverlays() {
       gsap.to(dandelion, { opacity: 1, duration: 0.25 });
       const dandelionNoSeeds = $('#dandelionNoSeeds');
       if (dandelionNoSeeds) gsap.to(dandelionNoSeeds, { opacity: 0, duration: 0.25 });
-      console.log('Dandelion reset (helper) complete - seedsVisible:', seedsVisible);
     }
 
     // Dandelion hover: swap to no-seeds version and show seeds
@@ -620,7 +624,6 @@ function createInteractiveOverlays() {
           (daisy && (target === daisy || target === daisy.querySelector('rect') || daisy.contains(target))) ||
           (lily && (relatedTarget === lily || lily.contains(relatedTarget))) ||
           (daisy && (relatedTarget === daisy || daisy.contains(relatedTarget)))) {
-        console.log('Dandelion hover ignored - pointer is over lily/daisy');
         return;
       }
       
@@ -688,7 +691,6 @@ function createInteractiveOverlays() {
             
             // If pointer is within lily or daisy but not dandelion, ignore
             if ((withinLily || withinDaisy) && !withinDandelion) {
-              console.log('Dandelion hover ignored - pointer is within lily/daisy bounds');
               return;
             }
           }
@@ -710,19 +712,16 @@ function createInteractiveOverlays() {
       const timeSinceLastHover = now - lastHoverTime;
       if (seedsAreSpreading && timeSinceLastHover < 1000) {
         // If we're already spreading AND it was recent, skip
-        console.log('Seeds already spreading (recent), skipping animation');
         return;
       }
       
       // If seeds appear spread but it's been a while, check actual position
       if (areSeedsSpreading() && timeSinceLastHover < 1000) {
-        console.log('Seeds appear spread (recent), skipping animation');
         return;
       }
       
       // If it's been a while, reset state to allow retry
       if (timeSinceLastHover > 1000) {
-        console.log('Long time since last hover, resetting state');
         seedsAreSpreading = false;
         lastHoverTime = 0;
       }
@@ -731,20 +730,17 @@ function createInteractiveOverlays() {
       lastHoverTime = now;
       seedsAreSpreading = true; // Set immediately to prevent wiggle from retriggering
       
-      console.log('Dandelion hover starting - seedsAreSpreading:', seedsAreSpreading, 'timeSinceLastHover:', timeSinceLastHover);
       
       // Debounce to prevent rapid re-triggers from wiggle
       hoverTimeout = setTimeout(() => {
         // Check one more time if seeds are already spreading (in case they finished animating)
         if (areSeedsSpreading()) {
-          console.log('Seeds already spread, skipping animation');
           return;
         }
         
         // Always query fresh from DOM on hover
         const seeds = getSeedElements();
         
-        console.log('Dandelion hover - checking seeds:', {
           dandelionNoSeeds: !!seeds.dandelionNoSeeds,
           seed1: !!seeds.seed1,
           seed2: !!seeds.seed2,
@@ -753,7 +749,6 @@ function createInteractiveOverlays() {
         });
         
         if (seeds.dandelionNoSeeds && seeds.seed1 && seeds.seed2 && seeds.seed3 && seeds.seed4) {
-          console.log('All seeds found, starting animation');
           
           // Stop any active wiggle immediately to prevent retriggers
           gsap.killTweensOf(dandelion, 'rotation');
@@ -813,7 +808,6 @@ function createInteractiveOverlays() {
           
           // Small delay to ensure visibility is set before animation
           requestAnimationFrame(() => {
-            console.log('About to call animateSeedsSpreading with seeds:', {
               seed1: seeds.seed1,
               seed2: seeds.seed2,
               seed3: seeds.seed3,
@@ -842,11 +836,9 @@ function createInteractiveOverlays() {
     // BUT only if we're not hovering over seeds themselves
     let leaveTimeout = null;
     dandelion.addEventListener('pointerleave', (e) => {
-      console.log('Dandelion pointerleave fired, seedsVisible:', seedsVisible, 'seedsAreSpreading:', seedsAreSpreading);
       
       // If seeds are visible or spreading, DON'T reset immediately - let the auto-hide timer handle it
       if (seedsVisible || seedsAreSpreading) {
-        console.log('Seeds are visible/spreading - ignoring pointerleave, starting auto-hide');
         scheduleSeedsAutoHide();
         return;
       }
@@ -903,7 +895,6 @@ function createInteractiveOverlays() {
       
       // If moving to a seed, don't hide - let seed handle its own leave
       if (isEnteringSeed) {
-        console.log('Pointer leaving dandelion but entering seed - keeping seeds visible');
         cancelSeedsAutoHide();
         return;
       }
@@ -917,21 +908,18 @@ function createInteractiveOverlays() {
       }
       // Otherwise perform normal reset
       resetDandelionState();
-      console.log('Dandelion hover ended - state reset complete');
       }, 250); // Slightly longer debounce on leave to allow user to aim/click
     });
   }
   
   const butterfly = $('#butterflyClosed');
   if (butterfly) {
-    console.log('Attaching interactions to butterfly');
     
     // CRITICAL: Move butterfly to end of DOM so it renders on top and can receive pointer events
     const externalLayer = document.getElementById('externalArtwork');
     if (butterfly.parentNode && butterfly.parentNode === externalLayer) {
       externalLayer.removeChild(butterfly);
       externalLayer.appendChild(butterfly);
-      console.log('Moved butterfly to end of DOM (on top)');
     }
     
     butterfly.classList.add('hotspot');
@@ -957,9 +945,6 @@ function createInteractiveOverlays() {
     const butterflyLabel = createHoverLabel('Contact Us', butterfly);
     allLabels.push(butterflyLabel);
     
-    console.log('Butterfly element:', butterfly);
-    console.log('Butterfly transform:', butterfly.getAttribute('transform'));
-    console.log('Butterfly pointer-events:', butterfly.getAttribute('pointer-events'));
     
     let butterflyLiftAnimation = null;
     
@@ -984,7 +969,6 @@ function createInteractiveOverlays() {
       if (isHoveringButterfly) return;
       isHoveringButterfly = true;
       
-      console.log('Butterfly pointerenter event triggered');
       
       // Hide all other labels and show only butterfly label
       hideAllLabelsExcept(butterflyLabel);
@@ -1038,7 +1022,6 @@ function createInteractiveOverlays() {
       
       butterflyHoverDebounce = setTimeout(() => {
         isHoveringButterfly = false;
-        console.log('Butterfly pointerleave event triggered');
         
         // Return butterfly to base position if not clicked
         butterflyLabel.setAttribute('opacity', '0');
@@ -1081,71 +1064,45 @@ function createInteractiveOverlays() {
     
     // Add mousedown and mouseup as backup
     butterfly.addEventListener('mousedown', (e) => {
-      console.log('Butterfly MOUSEDOWN triggered');
     });
     
-    butterfly.addEventListener('click', (e) => {
-      e.stopPropagation();
-      console.log('Butterfly clicked - starting fly away animation');
-      
-      // Set flying flag to prevent hover interference
+    // Helper to initiate butterfly fly-away
+    const startButterflyFlight = () => {
       butterflyIsFlying = true;
-      
-      // Clear any pending hover debounce
       if (butterflyHoverDebounce) {
         clearTimeout(butterflyHoverDebounce);
         butterflyHoverDebounce = null;
       }
-      
-      // Kill any active lift animation
       if (butterflyLiftAnimation) {
         butterflyLiftAnimation.kill();
       }
-      
-      // Disable pointer events on butterfly during flight
       butterfly.style.pointerEvents = 'none';
-      
       animateButterflyFlyAway('/contact', butterflyLabel);
+    };
+    
+    butterfly.addEventListener('click', (e) => {
+      e.stopPropagation();
+      startButterflyFlight();
     });
+    
     butterfly.addEventListener('keypress', (e) => { 
       if (e.key === 'Enter') {
-        // Set flying flag to prevent hover interference
-        butterflyIsFlying = true;
-        
-        // Clear any pending hover debounce
-        if (butterflyHoverDebounce) {
-          clearTimeout(butterflyHoverDebounce);
-          butterflyHoverDebounce = null;
-        }
-        
-        // Kill any active lift animation
-        if (butterflyLiftAnimation) {
-          butterflyLiftAnimation.kill();
-        }
-        
-        // Disable pointer events on butterfly during flight
-        butterfly.style.pointerEvents = 'none';
-        
-        animateButterflyFlyAway('/contact', butterflyLabel);
+        startButterflyFlight();
       }
     });
   } else {
-    console.log('Butterfly not found!');
   }
   
   if (brand) {
-    console.log('Attaching interactions to brand');
     brand.classList.add('hotspot');
     brand.setAttribute('data-route', '/');
     brand.setAttribute('tabindex', '0');
     brand.addEventListener('click', (e) => { 
       e.stopPropagation();
-      console.log('Brand clicked'); 
       navigate('/'); 
     });
     brand.addEventListener('keypress', (e) => { if (e.key === 'Enter') navigate('/'); });
   } else {
-    console.log('Brand not found!');
   }
 }
 
@@ -1523,46 +1480,6 @@ function animateSeeds() {
 
 // Brand text interactions are now handled in createInteractiveOverlays()
 
-// Helper for attaching butterfly behavior to an overlay rectangle
-function attachButterfly(overlay) {
-  gsap.to(overlay, { y: -6, duration: 2.2, repeat: -1, yoyo: true, ease: 'sine.inOut' });
-  
-  overlay.addEventListener('pointerenter', () => {
-    gsap.to(overlay, { y: -12, duration: 0.4, ease: 'power2.out' });
-  });
-  overlay.addEventListener('pointerleave', () => {
-    gsap.to(overlay, { y: 0, duration: 0.6, ease: 'power2.out' });
-  });
-  
-  overlay.addEventListener('click', () => {
-    const rect = svg.viewBox.baseVal;
-    const tl = gsap.timeline({ onComplete: () => navigate('/contact') });
-    tl.to(overlay, { x: rect.width * 0.6, y: -rect.height * 0.35, duration: 1.2, ease: 'power3.in' })
-      .to(overlay, { x: rect.width * 1.0, y: -rect.height * 0.6, opacity: 0, duration: 0.6, ease: 'power2.in' });
-  });
-}
-
-// When a seed is clicked, drift it off to the right before navigating
-function onSeedClick(seedGroup, route) {
-  const rect = svg.viewBox.baseVal;
-  // Dim other seeds
-  $$('.seed-link').forEach((g) => {
-    if (g !== seedGroup) gsap.to(g, { opacity: 0.2, duration: 0.3 });
-  });
-  const current = seedGroup.transform.baseVal.consolidate();
-  const matrix = current ? current.matrix : svg.createSVGMatrix();
-  const startX = matrix.e; const startY = matrix.f;
-  const driftX = rect.width * 0.6; const driftY = -rect.height * 0.15;
-  gsap.to(seedGroup, {
-    x: startX + driftX,
-    y: startY + driftY,
-    rotation: gsap.utils.random(-25, 25),
-    duration: 0.9,
-    ease: 'power2.in',
-    onComplete: () => navigate(route)
-  });
-}
-
 function animateButterflyFlyAway(route, label) {
   const butterflyClosed = $('#butterflyClosed');
   
@@ -1586,8 +1503,6 @@ function animateButterflyFlyAway(route, label) {
     baseScale = parseFloat(scaleMatch[1]) || baseScale;
   }
   
-  console.log('Butterfly starting position:', baseX, baseY, baseScale);
-  console.log('Screen dimensions:', screenWidth, screenHeight);
   
   // Get label's current position if it exists
   let labelStartX = baseX;
@@ -1627,7 +1542,6 @@ function animateButterflyFlyAway(route, label) {
   // Smooth undulating wave motion - natural butterfly flight from left to right
   // Creates a flowing sine-wave pattern as it flies across the screen
   
-  console.log('Starting butterfly animation');
   
   // Calculate distance to edge of viewport (not extra 500px past it)
   const viewportWidth = svg.getBoundingClientRect().width;
@@ -1637,7 +1551,6 @@ function animateButterflyFlyAway(route, label) {
   const waveFrequency = 5; // Number of wave cycles across the screen
   const flapCycles = 30; // Number of wing flaps during flight (increased proportionally)
   
-  console.log(`Butterfly flying ${totalDistance}px in ${totalDuration}s with wave motion`);
   
   // HORIZONTAL MOVEMENT: Smooth left to right over the full duration
   fly.to(animState, {
@@ -1695,7 +1608,6 @@ function animateButterflyFlyAway(route, label) {
   
   // Navigate as soon as it exits the visible box (no extra delay)
   fly.call(() => {
-    console.log('Butterfly exited visible area - navigating now');
     navigate(route);
   }, null, timeToReachEdge + 0.5); // Navigate 0.5s after reaching edge
   
@@ -1704,10 +1616,8 @@ function animateButterflyFlyAway(route, label) {
 }
 
 function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSeedsAutoHide) {
-  console.log('animateSeedsSpreading called with:', seedGroups?.length, 'seed groups');
   
   if (!seedGroups || seedGroups.length === 0) {
-    console.log('No seed groups provided or empty array');
     return;
   }
   
@@ -1718,22 +1628,17 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
     { name: 'Capabilities', route: '/capabilities' },
   ];
   
-  console.log('Starting forEach loop with', seedGroups.length, 'seeds');
   
   seedGroups.forEach((seedGroup, i) => {
-    console.log(`forEach iteration ${i + 1} starting`);
     
     try {
       if (!seedGroup) {
-        console.log(`Seed ${i + 1} is null/undefined`);
         return;
       }
       
-      console.log(`Processing seed ${i + 1}:`, seedGroup);
       
       const page = seedPages[i];
       if (!page) {
-        console.log(`No page data for seed ${i + 1}`);
         return;
       }
     
@@ -1792,9 +1697,7 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
         hit.setAttribute('pointer-events', 'all');
         // Append last so it sits on top inside the group for hit testing
         seedGroup.appendChild(hit);
-        console.log(`Added hit area to seed ${i + 1}`);
       } else {
-        console.log(`Hit area already exists for seed ${i + 1}`);
       }
     } catch (error) {
       console.error(`Error adding hit area to seed ${i + 1}:`, error);
@@ -1827,14 +1730,9 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
       makeAllChildrenVisible(seedGroup);
     });
     
-    console.log(`Seed ${i + 1} made visible - transform:`, seedGroup.getAttribute('transform'), 'style:', seedGroup.style.cssText);
     
     // Debug: log positions for first seed
     if (i === 0) {
-      console.log(`Seed ${i + 1} animation: baseX=${baseX}, baseY=${baseY}, spacing=${spacing}, finalX=${finalX}, finalY=${finalY}`);
-      console.log('Seed element:', seedGroup);
-      console.log('Seed transform:', seedGroup.getAttribute('transform'));
-      console.log('Seed style:', seedGroup.style.cssText);
     }
     
     // Set seed to START position (baseX) - visibility already set above in requestAnimationFrame
@@ -1921,12 +1819,10 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
         seedGroup._finalY = baseY;
         seedGroup._isAtFinalPosition = true; // Mark as complete
         enforceVisibility();
-        console.log(`Seed ${i + 1} animation complete and LOCKED at position (${finalX}, ${baseY})`);
       },
       onStart: () => {
         // Force visibility immediately when animation starts - CRITICAL
         enforceVisibility();
-        console.log(`Seed ${i + 1} animation started`);
       }
     });
     
@@ -2041,7 +1937,6 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
     label.style.display = 'block';
     
     // Log label creation for debugging
-    console.log(`Created label "${page.name}" for seed ${i + 1} at position (${finalX + 25}, ${finalY})`);
     
     // Fade in label after seed starts moving - shorter delay
     gsap.to(label, { 
@@ -2054,7 +1949,6 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
         label.style.opacity = '1';
         label.style.visibility = 'visible';
         label.style.pointerEvents = 'auto';
-        console.log(`Label "${page.name}" fading in`);
       },
       onComplete: () => {
         // Ensure label is fully visible
@@ -2062,7 +1956,6 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
         label.style.opacity = '1';
         label.style.visibility = 'visible';
         label.style.display = 'block';
-        console.log(`Label "${page.name}" fully visible`);
       }
     });
     
@@ -2084,13 +1977,11 @@ function animateSeedsSpreading(seedGroups, seedLabels, seedAnimations, cancelSee
       }
     });
     
-      console.log(`Finished processing seed ${i + 1}`);
     } catch (error) {
       console.error(`ERROR processing seed ${i + 1}:`, error);
       console.error('Error stack:', error.stack);
     }
   });
   
-  console.log('animateSeedsSpreading complete - processed all seeds');
 }
 

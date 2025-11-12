@@ -26,10 +26,10 @@ open index.html
 ```
 
 ### For Production
-Use `app_cleaned.js` - optimized, production-ready (76KB, no debug code):
+The `app.js` file is production-ready (76KB, optimized, no debug code):
 ```html
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-<script src="app_cleaned.js"></script>
+<script src="app.js"></script>
 ```
 
 ## 📁 Project Structure
@@ -37,8 +37,7 @@ Use `app_cleaned.js` - optimized, production-ready (76KB, no debug code):
 ```
 ├── index.html              # Main HTML file
 ├── styles.css              # Styles and animations
-├── app_cleaned.js          # Production version (76KB) ⭐
-├── app.js                  # Development version with logging (83KB)
+├── app.js                  # Production-ready JavaScript (76KB) ⭐
 └── assets/                 # SVG components
     ├── lilly.svg
     ├── daisey.svg
@@ -51,7 +50,7 @@ Use `app_cleaned.js` - optimized, production-ready (76KB, no debug code):
 
 ## ⚙️ Configuration
 
-All settings are centralized in the `CONFIG` object at the top of `app_cleaned.js`:
+All settings are centralized in the `CONFIG` object at the top of `app.js`:
 
 ```javascript
 const CONFIG = {
@@ -126,15 +125,13 @@ Tested on:
 
 ## 🚢 Deployment
 
-### Option 1: Direct Replacement
-```bash
-cp app_cleaned.js app.js
-```
+### Option 1: Use As-Is
+The `app.js` file is already production-ready - just deploy!
 
-### Option 2: Minified
+### Option 2: Minified (Optional)
 ```bash
 npm install -g terser
-terser app_cleaned.js -o app.min.js --compress --mangle
+terser app.js -o app.min.js --compress --mangle
 ```
 
 ### Option 3: Embed in Existing Site
@@ -145,7 +142,7 @@ terser app_cleaned.js -o app.min.js --compress --mangle
   </svg>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-<script src="app_cleaned.js"></script>
+<script src="app.js"></script>
 ```
 
 ## 🔧 Customization
@@ -181,7 +178,7 @@ DANDELION_HIT_PADDING: 10  // Increase from 5 (smaller hit area)
 
 ## 📋 Deployment Checklist
 
-- [ ] Use `app_cleaned.js` (not `app.js`)
+- [ ] Verify `app.js` is the production version
 - [ ] Verify all SVG assets in `assets/` folder
 - [ ] Update navigation routes to your URLs
 - [ ] Test on desktop (Chrome, Firefox, Safari)
@@ -193,11 +190,11 @@ DANDELION_HIT_PADDING: 10  // Increase from 5 (smaller hit area)
 
 ## 📝 What Was Cleaned
 
-### Removed
-- 86 console.log statements
-- 2 unused functions (`attachButterfly`, `onSeedClick`)
-- Duplicate butterfly click logic
-- Debug code and temporary files
+### Optimizations Applied
+- ✅ 86 console.log statements removed
+- ✅ 2 unused functions removed (`attachButterfly`, `onSeedClick`)
+- ✅ Duplicate butterfly click logic consolidated
+- ✅ Debug code and temporary files removed
 
 ### Added
 - `CONFIG` object for centralized settings
@@ -237,7 +234,7 @@ DANDELION_HIT_PADDING: 10  // Increase from 5 (smaller hit area)
 
 For questions or customization:
 1. Check the `CONFIG` object for adjustable parameters
-2. Review inline comments in `app_cleaned.js`
+2. Review inline comments in `app.js`
 3. Test changes incrementally
 
 ## 📜 License
